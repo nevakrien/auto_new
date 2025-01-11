@@ -6,6 +6,7 @@ readme = "README.md"
 version = "1.0.0"
 edition = "2021"
 exclude = ["/tests", ".*"]
+repository="https://github.com/nevakrien/auto_new.git"
 
 [lib]
 proc-macro = true
