@@ -1,4 +1,4 @@
-use new_macro::new;
+use auto_new::new;
 
 #[derive(new)]
 #[no_new_arc]

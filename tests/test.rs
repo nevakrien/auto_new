@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use new_macro::new;
+use auto_new::new;
 
 #[derive(new,Debug)]
 pub struct Dumby<T> where T:Copy{

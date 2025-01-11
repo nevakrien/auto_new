@@ -1,5 +1,5 @@
 [package]
-name = "new_macro"
+name = "auto_new"
 license = "Apache-2.0"
 description = "basic macro for removing the need to write new(...) on structs"
 readme = "README.md"

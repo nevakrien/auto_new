@@ -14,7 +14,7 @@ use syn::{parse_macro_input, DeriveInput, Data, Fields,spanned::Spanned};
 /// 
 /// # Usage
 /// ```rust
-///  use new_macro::new;
+///  use auto_new::new;
 ///
 ///  #[derive(new)]
 ///  struct MyStruct {
@@ -32,7 +32,7 @@ use syn::{parse_macro_input, DeriveInput, Data, Fields,spanned::Spanned};
 ///  You can use the `#[new_visibility(...)]` attribute to limit the visibility of the generated functions.
 ///
 /// ```rust
-///  use new_macro::new;
+///  use auto_new::new;
 ///
 ///  #[derive(new)]
 ///  #[new_visibility(/*private*/)]
@@ -49,7 +49,7 @@ use syn::{parse_macro_input, DeriveInput, Data, Fields,spanned::Spanned};
 ///   `std`, or when `Arc` is unnecessary, by using `#[no_new_arc]`.
 ///
 ///   ```rust
-///   use new_macro::new;
+///   use auto_new::new;
 ///   
 ///   #[derive(new)]
 ///   #[no_new_arc]

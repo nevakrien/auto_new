@@ -1,4 +1,4 @@
-# `new_macro`
+# `auto_new`
 
 This crate automatically generates `new` and `new_arc` functions for structs using the `#[derive(new)]` macro.
 
@@ -16,7 +16,7 @@ as two seprate memory allocations. This makes it hard for the optimizer to inlin
 To use `#[derive(new)]`, simply annotate your struct with it, and the macro will generate the `new` function for you. Here's an example:
 
 ```rust
-use new_macro::new;
+use auto_new::new;
 
 #[derive(new)]
 pub struct MyStruct {
@@ -32,7 +32,7 @@ fn main() {
 
 The crate is fairly robust and works with all sorts of weird generics and lifetimes without issue.
 ```rust
-use new_macro::new;
+use auto_new::new;
 
 #[derive(new,Debug)]
 pub struct GenericStruct<'a, T> where T:Copy {

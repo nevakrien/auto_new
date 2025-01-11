@@ -1,5 +1,5 @@
 mod m{
-	use new_macro::new;
+	use auto_new::new;
 
 	#[derive(new)]
 	#[new_visibility(/*private*/)]
