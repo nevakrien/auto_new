@@ -1,3 +1,4 @@
+use syn::spanned::Spanned;
 extern crate quote;
 
 use quote::quote;
@@ -50,13 +51,13 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
         Fields::Unnamed(ref fields) => {
 		    // Handle tuple structs
 		    let new_args = fields.unnamed.iter().enumerate().map(|(i, f)| {
-		        let arg_name = syn::Ident::new(&format!("arg{}", i), proc_macro2::Span::call_site());
+		        let arg_name = syn::Ident::new(&format!("arg{}", i),f.span());
 		        let ty = &f.ty;
 		        quote! { #arg_name: #ty }
 		    });
 
-		    let init = fields.unnamed.iter().enumerate().map(|(i, _)| {
-		        let arg_name = syn::Ident::new(&format!("arg{}", i), proc_macro2::Span::call_site());
+		    let init = fields.unnamed.iter().enumerate().map(|(i, f)| {
+		        let arg_name = syn::Ident::new(&format!("arg{}", i), f.span());
 		        quote! { #arg_name }
 		    });
 
@@ -65,6 +66,8 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
                     pub fn new(#(#new_args),*) -> Self {
                         Self(#(#init),*)
                     }
+
+
                 }
             }
 		}
@@ -76,6 +79,12 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
                         Self
                     }
                 }
+
+
+                // #[cfg(feature = "std")] // Conditionally compile new_arc
+                // pub fn new_arc() -> std::sync::Arc<Self> {
+                //     std::sync::Arc::new(Self)
+                // }
             }
         }
     };
