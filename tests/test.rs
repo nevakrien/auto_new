@@ -42,6 +42,15 @@ fn check(){
 } 
 
 #[test]
+fn test_arc(){
+	let _ = Dumby::<u16>::new_arc(2,7);
+	let _ = MyUnit::new_arc();
+	let _ = Dumby2::new_arc(&2);
+	println!("hello world");
+} 
+
+#[cfg(not(miri))] 
+#[test]
 fn test_fails() {
     let t = trybuild::TestCases::new();
     
