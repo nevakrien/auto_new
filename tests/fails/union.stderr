@@ -1,0 +1,11 @@
+error: only structs are allowed with #[derive(new)]
+ --> tests/fails/union.rs:4:7
+  |
+4 | union Dumby2{
+  |       ^^^^^^
+
+error[E0601]: `main` function not found in crate `$CRATE`
+ --> tests/fails/union.rs:7:2
+  |
+7 | }
+  |  ^ consider adding a `main` function to `$DIR/tests/fails/union.rs`

@@ -1,0 +1,11 @@
+error: only structs are allowed with #[derive(new)]
+ --> tests/fails/enum.rs:4:6
+  |
+4 | enum Dumby{
+  |      ^^^^^
+
+error[E0601]: `main` function not found in crate `$CRATE`
+ --> tests/fails/enum.rs:7:2
+  |
+7 | }
+  |  ^ consider adding a `main` function to `$DIR/tests/fails/enum.rs`
