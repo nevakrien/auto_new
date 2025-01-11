@@ -1,9 +1,3 @@
-error: cannot find attribute `no_new_arc` in this scope
- --> tests/fails/private.rs:6:4
-  |
-6 |     #[no_new_arc]//check this as well
-  |       ^^^^^^^^^^
-
 error[E0624]: associated function `new` is private
   --> tests/fails/private.rs:18:20
    |

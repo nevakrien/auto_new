@@ -1,9 +1,3 @@
-error: cannot find attribute `no_new_arc` in this scope
- --> tests/fails/no_arc.rs:4:3
-  |
-4 | #[no_new_arc]
-  |   ^^^^^^^^^^
-
 error[E0599]: no function or associated item named `new_arc` found for struct `Dumby` in the current scope
   --> tests/fails/no_arc.rs:15:17
    |

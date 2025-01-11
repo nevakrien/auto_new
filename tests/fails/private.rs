@@ -2,7 +2,7 @@ mod m{
 	use new_macro::new;
 
 	#[derive(new)]
-	#[new_visibility()]
+	#[new_visibility(/*private*/)]
 	#[no_new_arc]//check this as well
 	pub struct Dumby<'a, T>(&'a T);
 

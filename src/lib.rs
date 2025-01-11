@@ -1,11 +1,66 @@
-use syn::spanned::Spanned;
 extern crate quote;
 
 use quote::quote;
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, DeriveInput, Data, Fields};
+use syn::{parse_macro_input, DeriveInput, Data, Fields,spanned::Spanned};
 
-#[proc_macro_derive(new, attributes(new_visibility, include_arc))]
+/// Automatically generates `new` and (optionaly) `new_arc` for a struct.
+/// - **`new`**:
+///   Creates a new instance of the struct from its components. 
+///   Arguments are named and are ordered the same way the struct is.
+///
+/// - **`new_arc`** (optional):
+///   same as `new` just creates an Arc\<MyStruct\>
+/// 
+/// # Usage
+/// ```rust
+///  use new_macro::new;
+///
+///  #[derive(new)]
+///  struct MyStruct {
+///      a: u32,
+///      b: String,
+///  }
+///
+///  fn main() {
+///      let instance = MyStruct::new_arc(42, String::from("Hello, world!"));
+///  }
+/// ```
+/// ### Attribute Options:
+///
+/// - **Custom Visibility**:
+///  You can use the `#[new_visibility(...)]` attribute to limit the visibility of the generated functions.
+///
+/// ```rust
+///  use new_macro::new;
+///
+///  #[derive(new)]
+///  #[new_visibility(/*private*/)]
+///  struct MyStruct (usize);
+///
+///  #[derive(new)]
+///  #[new_visibility(pub crate)]
+///  struct MyOtherStruct (usize);
+///
+///  ```
+///
+/// - **Exclude `new_arc`**:
+///   Skip generating the `new_arc` function for environments that do not support
+///   `std`, or when `Arc` is unnecessary, by using `#[no_new_arc]`.
+///
+///   ```rust
+///   use new_macro::new;
+///   
+///   #[derive(new)]
+///   #[no_new_arc]
+///   struct MyStruct {
+///       a: u32,
+///   }
+///   ```
+///
+
+
+#[proc_macro_derive(new, attributes(new_visibility, no_new_arc))]
 pub fn derive_new(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
@@ -30,13 +85,13 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
         .and_then(|attr| attr.parse_args::<syn::Visibility>().ok())
         .unwrap_or_else(|| syn::parse_quote!(pub)); // Default to `pub`
 
-    // Check for `include_arc` attribute
+    // Check for `no_new_arc` attribute
     let include_arc = !input
         .attrs
         .iter()
         .any(|attr| attr.path().is_ident("no_new_arc"));
 
-    // Match on the type of fields in the struct
+    // Generate functions
     let expanded = match struct_data.fields {
         Fields::Named(ref fields) => {
             // Handle named fields
@@ -55,16 +110,17 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
                 quote! { #name }
             });
 
-            let arc_writes = fields.named.iter().enumerate().map(|(i, f)| {
-                let name = f.ident.as_ref().unwrap();
-                let ptr_name = syn::Ident::new(&format!("ptr{}", i), f.span());
-                quote! {
-                    let #ptr_name = &raw mut (*raw_mem.as_mut_ptr()).#name;
-                    #ptr_name.write(#name);
-                }
-            });
-
             let new_arc_function = if include_arc {
+
+            	let arc_writes = fields.named.iter().enumerate().map(|(i, f)| {
+	                let name = f.ident.as_ref().unwrap();
+	                let ptr_name = syn::Ident::new(&format!("ptr{}", i), f.span());
+	                quote! {
+	                    let #ptr_name = &raw mut (*raw_mem.as_mut_ptr()).#name;
+	                    #ptr_name.write(#name);
+	                }
+	            });
+
                 quote! {
                     #visibility fn new_arc(#(#new_args),*) -> std::sync::Arc<Self> {
                         unsafe {
@@ -92,7 +148,7 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
             }
         }
         Fields::Unnamed(ref fields) => {
-            // Handle tuple structs
+            //Name arguments
             let new_args: Vec<_> = fields
                 .unnamed
                 .iter()
@@ -109,18 +165,17 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
                 quote! { #arg_name }
             });
 
-            let arc_writes = fields.unnamed.iter().enumerate().map(|(i, _)| {
-                let arg_name = syn::Ident::new(&format!("arg{}", i), proc_macro2::Span::call_site());
-                let ptr_name = syn::Ident::new(&format!("ptr{}", i), proc_macro2::Span::call_site());
-                let idx = syn::Index::from(i);
-
-                quote! {
-                    let #ptr_name = &raw mut (*raw_mem.as_mut_ptr()).#idx;
-                    #ptr_name.write(#arg_name);
-                }
-            });
-
             let new_arc_function = if include_arc {
+            	let arc_writes = fields.unnamed.iter().enumerate().map(|(i, _)| {
+	                let arg_name = syn::Ident::new(&format!("arg{}", i), proc_macro2::Span::call_site());
+	                let ptr_name = syn::Ident::new(&format!("ptr{}", i), proc_macro2::Span::call_site());
+	                let idx = syn::Index::from(i);
+
+	                quote! {
+	                    let #ptr_name = &raw mut (*raw_mem.as_mut_ptr()).#idx;
+	                    #ptr_name.write(#arg_name);
+	                }
+	            });
                 quote! {
                     #visibility fn new_arc(#(#new_args),*) -> std::sync::Arc<Self> {
                         unsafe {
@@ -146,7 +201,7 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
             }
         }
         Fields::Unit => {
-            // Handle unit structs
+        	//Units dont need anything fancy
             let new_arc_function = if include_arc {
                 quote! {
                     #visibility fn new_arc() -> std::sync::Arc<Self> {
