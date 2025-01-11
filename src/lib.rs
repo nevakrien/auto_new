@@ -82,8 +82,10 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
 		    let arc_writes = fields.unnamed.iter().enumerate().map(|(i, f)| {
 		        let arg_name = syn::Ident::new(&format!("arg{}", i), f.span());
 		        let ptr_name = syn::Ident::new(&format!("ptr{}", i), f.span());
+		        let idx = syn::Index::from(i);
+		        
 		        quote! { 
-		            let #ptr_name = &raw mut (*raw_mem.as_mut_ptr()).#i;
+		            let #ptr_name = &raw mut (*raw_mem.as_mut_ptr()).#idx;
 		            #ptr_name.write(#arg_name);
 		        }
 		    });
