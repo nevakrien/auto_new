@@ -1,0 +1,21 @@
+error: cannot find attribute `no_new_arc` in this scope
+ --> tests/fails/no_arc.rs:4:3
+  |
+4 | #[no_new_arc]
+  |   ^^^^^^^^^^
+
+error[E0599]: no function or associated item named `new_arc` found for struct `Dumby` in the current scope
+  --> tests/fails/no_arc.rs:15:17
+   |
+5  | pub struct Dumby<'a, T>(&'a T);
+   | ----------------------- function or associated item `new_arc` not found for this struct
+...
+15 |     let _ = Dumby::new_arc(&2);
+   |                    ^^^^^^^ function or associated item not found in `Dumby<'_, _>`
+   |
+note: if you're trying to build a new `Dumby<'_, _>`, consider using `Dumby::<'a, T>::new` which returns `Dumby<'_, _>`
+  --> tests/fails/no_arc.rs:3:10
+   |
+3  | #[derive(new)]
+   |          ^^^
+   = note: this error originates in the derive macro `new` (in Nightly builds, run with -Z macro-backtrace for more info)

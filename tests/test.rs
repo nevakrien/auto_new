@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use new_macro::new;
 
 #[derive(new)]
@@ -34,7 +35,7 @@ impl<T: Clone> Dumby2<'_, T>{
 
 
 #[test]
-fn check(){
+fn basic_calls(){
 	let _ = Dumby::<u16>::new(2,7);
 	let _ = MyUnit::new();
 	let _ = Dumby2::new(&2);
@@ -48,6 +49,36 @@ fn test_arc(){
 	let _ = Dumby2::new_arc(&2);
 	println!("hello world");
 } 
+
+#[derive(new)]
+pub struct ComplexStruct<'a, T: 'a + Send + Sync> {
+    a: &'a T,                   // Reference with a lifetime
+    b: Arc<T>,                  // Shared ownership with an `Arc`
+    c: Box<Option<Vec<T>>>,     // Boxed heap allocation with a generic
+}
+
+impl<'a, T: 'a + Clone + Send + Sync> ComplexStruct<'a, T> {
+    pub fn do_stuff(&self) -> T {
+        assert!(self.c.is_some());
+        self.a.clone()
+    }
+}
+
+#[test]
+fn safety_test() {
+    let data = Arc::new(42);
+    let boxed_data = Box::new(Some(vec![*data]));
+
+    let complex = ComplexStruct::new(&*data, data.clone(), boxed_data);
+    let complex_arc = ComplexStruct::new_arc(&*data, data.clone(), Box::new(Some(vec![*data])));
+
+    assert_eq!(*complex.a, 42);
+    assert_eq!(*complex_arc.a, 42);
+
+    drop(complex);
+    drop(complex_arc);
+}
+
 
 #[cfg(not(miri))] 
 #[test]

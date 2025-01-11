@@ -1,0 +1,23 @@
+error: cannot find attribute `no_new_arc` in this scope
+ --> tests/fails/private.rs:6:4
+  |
+6 |     #[no_new_arc]//check this as well
+  |       ^^^^^^^^^^
+
+error[E0624]: associated function `new` is private
+  --> tests/fails/private.rs:18:20
+   |
+4  |     #[derive(new)]
+   |              --- private associated function defined here
+...
+18 |     let _ = m::Dumby::new(&3);
+   |                       ^^^ private associated function
+
+error[E0599]: no function or associated item named `new_arc` found for struct `Dumby` in the current scope
+  --> tests/fails/private.rs:19:20
+   |
+7  |     pub struct Dumby<'a, T>(&'a T);
+   |     ----------------------- function or associated item `new_arc` not found for this struct
+...
+19 |     let _ = m::Dumby::new_arc(&2);
+   |                       ^^^^^^^ function or associated item not found in `Dumby<'_, _>`
