@@ -59,7 +59,6 @@ use syn::{parse_macro_input, DeriveInput, Data, Fields,spanned::Spanned};
 ///   ```
 ///
 
-
 #[proc_macro_derive(new, attributes(new_visibility, no_new_arc))]
 pub fn derive_new(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -110,12 +109,19 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
                 quote! { #name }
             });
 
+            /*
+            while we could make new_arc using new thats going to be ineffishent in many cases. 
+            because Arc::new(Something{}) usually first allocates on the stack and then moves to the heap. 
+            this is dumb but the optimizer has a hard time seeing it because a heap allocation is a side effect. 
+			to avoid this we explictly allocate the heap memory first and then write to it.
+			*/
             let new_arc_function = if include_arc {
 
             	let arc_writes = fields.named.iter().enumerate().map(|(i, f)| {
 	                let name = f.ident.as_ref().unwrap();
 	                let ptr_name = syn::Ident::new(&format!("ptr{}", i), f.span());
 	                quote! {
+	                	// SAFETY: we know the memory is valid since its allocated in the lines above
 	                    let #ptr_name = &raw mut (*raw_mem.as_mut_ptr()).#name;
 	                    #ptr_name.write(#name);
 	                }
@@ -123,6 +129,9 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
 
                 quote! {
                     #visibility fn new_arc(#(#new_args),*) -> std::sync::Arc<Self> {
+                        // SAFETY: The raw memory is uninitialized but valid for writing because it is
+			            // allocated by `Arc::new_uninit`. Each field is initialized exactly once
+			            // before calling `assume_init`, ensuring the struct is fully initialized and nothing is forgoten.
                         unsafe {
                             let mut uninit: std::sync::Arc<std::mem::MaybeUninit<Self>> = std::sync::Arc::new_uninit();
                             let raw_mem: &mut std::mem::MaybeUninit<Self> = std::sync::Arc::get_mut(&mut uninit).unwrap();
@@ -165,6 +174,7 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
                 quote! { #arg_name }
             });
 
+            /*same notes as Named*/
             let new_arc_function = if include_arc {
             	let arc_writes = fields.unnamed.iter().enumerate().map(|(i, _)| {
 	                let arg_name = syn::Ident::new(&format!("arg{}", i), proc_macro2::Span::call_site());
@@ -172,12 +182,16 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
 	                let idx = syn::Index::from(i);
 
 	                quote! {
+	                	// SAFETY: we know the memory is valid since its allocated in the lines above
 	                    let #ptr_name = &raw mut (*raw_mem.as_mut_ptr()).#idx;
 	                    #ptr_name.write(#arg_name);
 	                }
 	            });
                 quote! {
                     #visibility fn new_arc(#(#new_args),*) -> std::sync::Arc<Self> {
+                        // SAFETY: The raw memory is uninitialized but valid for writing because it is
+			            // allocated by `Arc::new_uninit`. Each field is initialized exactly once
+			            // before calling `assume_init`, ensuring the struct is fully initialized and nothing is forgoten.
                         unsafe {
                             let mut uninit: std::sync::Arc<std::mem::MaybeUninit<Self>> = std::sync::Arc::new_uninit();
                             let raw_mem: &mut std::mem::MaybeUninit<Self> = std::sync::Arc::get_mut(&mut uninit).unwrap();
@@ -201,7 +215,7 @@ pub fn derive_new(input: TokenStream) -> TokenStream {
             }
         }
         Fields::Unit => {
-        	//Units dont need anything fancy
+        	//Units dont need anything fancy since there is no memory to move into the arc
             let new_arc_function = if include_arc {
                 quote! {
                     #visibility fn new_arc() -> std::sync::Arc<Self> {
